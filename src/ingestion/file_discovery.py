@@ -1,47 +1,78 @@
+
 import os
 
-from src.utils.setup_logger import logger
-from dotenv import load_dotenv
 from pathlib import Path
 
-
-load_dotenv()
-
-def discover_csv_files(data_path: str | None = None) -> list[Path]:
+from src.utils.setup_logger import logger
 
 
-    try: 
-        logger.info('Started execution of discover_csv_files() function')
-        logger.info(f"Initial data_path: {data_path}")
+PROJECT_ROOT_DIRECTORY = Path(__file__).parent.parent.parent
 
-        PROJECT_ROOT_DIR = Path(__file__).parent.parent.parent
 
-        logger.info(f"Project Root Directory: {PROJECT_ROOT_DIR}")
+def discover_csv_files(
+    data_path: str | None = None
+) -> list[Path]:
 
+    logger.info("Started CSV file discovery.")
+    logger.info(f"Initial data path: {data_path}")
+
+    try:
+
+        # Get data path from environment if not provided
         if data_path is None:
-            data_path = os.getenv('RAW_DATA_PATH')
-            logger.info(f"data_path from environmental variables: {data_path}")
+            data_path = os.getenv("RAW_DATA_PATH")
 
-        raw_path = PROJECT_ROOT_DIR / data_path
+        if not data_path:
+            raise ValueError(
+                "RAW_DATA_PATH is not configured."
+            )
 
-        logger.info(f"Raw Path from root folder: {raw_path}")
+        # Resolve local data directory
+        raw_path = Path(data_path).expanduser()
 
+        if not raw_path.is_absolute():
+            raw_path = PROJECT_ROOT_DIRECTORY / raw_path
+
+        raw_path = raw_path.resolve()
+
+        logger.info(
+            f"Resolved raw data directory: {raw_path}"
+        )
+
+        # Validate directory
         if not raw_path.exists():
-            raise FileNotFoundError(f"Raw data directory does not exist: {raw_path}")
+            raise FileNotFoundError(
+                f"Raw data directory does not exist: {raw_path}"
+            )
 
         if not raw_path.is_dir():
-            raise NotADirectoryError(f"Raw data path is not a directory: {raw_path}")
+            raise NotADirectoryError(
+                f"Raw data path is not a directory: {raw_path}"
+            )
 
-        csv_files = sorted(raw_path.glob("*.csv"))
-
-        logger.info(f"CSV Files: {csv_files}")
+        # Discover CSV files
+        csv_files = sorted(
+            path
+            for path in raw_path.glob("*.csv")
+            if path.is_file()
+        )
 
         if not csv_files:
-            raise FileNotFoundError(f"No CSV files are found in {raw_path}")
+            raise FileNotFoundError(
+                f"No CSV files found in {raw_path}"
+            )
+
+        logger.info(
+            f"Successfully discovered {len(csv_files)} CSV files."
+        )
+
+        for file in csv_files:
+            logger.info(f"Discovered file: {file.name}")
 
         return csv_files
-    except Exception as error:
-        logger.error(f"discover_csv_files() failed due to {error}")
-        raise RuntimeError(f"discover_csv_files() failed due to {error}")
-    
-    
+
+    except Exception:
+        logger.exception(
+            "CSV file discovery failed."
+        )
+        raise

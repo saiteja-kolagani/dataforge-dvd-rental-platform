@@ -1,14 +1,81 @@
-# Data Directory
+
+# ==========================================
+# DataForge - DVD Rental Data Engineering
+# ==========================================
+
+# Raw datasets
 data/raw/*.csv
 
-# Logs Directory
-logs/*.log
+# Logs
+logs/
+*.log
 
-# Environment
-.venv/
+# Environment variables and secrets
 .env
+.env.*
+!.env.example
 
-# Python Cache
+# Python virtual environments
+.venv/
+venv/
+dvdenv/
+
+# Python cache
 __pycache__/
-*.pyc
 *.py[cod]
+*$py.class
+
+# Generated Lambda deployment packages
+lambda-package/
+*.zip
+
+# Temporary AWS test files
+dynamodb-key.json
+initialize-response.json
+trigger-response.json
+
+# Test artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE and editor settings
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Generated Lambda deployment package
+lambda-package/
+
+# Lambda deployment ZIPs
+*.zip
+
+# Generated ready-marker files
+scripts/*_dvdrental.json
+
+# Local data and logs
+data/raw/*.csv
+logs/
+*.log
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Python environments
+.venv/
+venv/
+dvdenv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Temporary test outputs
+dynamodb-key.json
+initialize-response.json
+trigger-response.json

@@ -1,0 +1,4 @@
+# DataForge - AWS Lambda runtime dependencies
+# Target: AWS Lambda Python 3.12, x86_64
+
+-r requirements.txt

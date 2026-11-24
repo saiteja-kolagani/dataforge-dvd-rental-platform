@@ -1,3 +1,4 @@
+
 import os
 import sys
 import logging
@@ -5,63 +6,67 @@ import logging
 from dotenv import load_dotenv
 from pathlib import Path
 
+
+# Load environment variables for local development
 load_dotenv()
 
-print("Setting up Project Root Directory")
+PROJECT_ROOT_DIRECTORY = Path(__file__).parent.parent.parent
 
-try:
-    PROJECT_ROOT_DIRECTORY = Path(__file__).parent.parent.parent
-except:
-    PROJECT_ROOT_DIRECTORY = Path.cwd().parent.parent
+ENVIRONMENT = os.getenv("ENVIRONMENT", "LOCAL").upper()
 
-print(f"Project Root Directory: {PROJECT_ROOT_DIRECTORY}")
 
-def setup_logger_handler(file_path: str | None = None, level=logging.INFO) -> logging.Logger:
+def setup_logger_handler(
+    file_path: str | None = None,
+    level=logging.INFO
+) -> logging.Logger:
 
-    print("Setup Logger Handler Started...")
+    logger = logging.getLogger("dataforge")
+    logger.setLevel(level)
 
-    try:
+    # Prevent duplicate log propagation
+    logger.propagate = False
 
-        print("Checking if any handlers existed...")
+    # Avoid duplicate handlers
+    if logger.handlers:
+        return logger
 
-        root_handler = logging.getLogger()
-        if root_handler.handlers:
-            return logging.getLogger(__name__)
+    formatter = logging.Formatter(
+        "%(asctime)s | %(funcName)s | %(levelname)s | %(message)s"
+    )
+
+    # Console logging: Local terminal and AWS CloudWatch
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setFormatter(formatter)
+
+    logger.addHandler(console_handler)
+
+    # File logging: Local environment only
+    if ENVIRONMENT == "LOCAL":
 
         if file_path is None:
-            file_path = os.getenv('LOG_FILE_PATH')
+            file_path = os.getenv("LOG_FILE_PATH")
 
-        print(f"File Path: {file_path}")
+        if file_path:
 
-        if not file_path:
-            raise ValueError('No File Path has provided!')
+            log_path = Path(file_path)
 
-        log_path = Path(file_path)
+            if not log_path.is_absolute():
+                log_path = PROJECT_ROOT_DIRECTORY / log_path
 
-        if not log_path.is_absolute():
-            log_path = PROJECT_ROOT_DIRECTORY / log_path
+            log_path.parent.mkdir(
+                parents=True,
+                exist_ok=True
+            )
 
-        print(f"Absolute Log Path: {log_path}")
+            file_handler = logging.FileHandler(
+                log_path,
+                encoding="utf-8"
+            )
 
-        print("Configuring logger...")
+            file_handler.setFormatter(formatter)
+            logger.addHandler(file_handler)
 
-        logging.basicConfig(
-            level=level,
-            format="%(asctime)s | %(funcName)s | %(levelname)s | %(message)s",
-            handlers=[
-                logging.FileHandler(log_path, encoding='utf-8'),
-                logging.StreamHandler(sys.stdout)
-            ],
-            force=True
-        )
+    return logger
 
-        print('Logger confifured successfully.')
 
-        return logging.getLogger(__name__)
-
-    except Exception as error:
-        print(f"Failed to configure logger due to {error}")
-        raise
-
-logger = setup_logger_handler() 
-
+logger = setup_logger_handler()

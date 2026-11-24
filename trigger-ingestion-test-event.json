@@ -1,0 +1,10 @@
+﻿{
+  "batch": {
+    "batch_id": "20261121_180301_dvdrental",
+    "ingestion_timestamp": "2026-11-21T18:03:01.658665+00:00",
+    "ingestion_date": "2026-11-21"
+  },
+  "upload_batch_id": "20261121_180109_775536_dvdrental",
+  "source_prefix": "landing/incoming/upload_batch_id=20261121_180109_775536_dvdrental/",
+  "execution_id": "b126e219-5197-4ba8-8fdb-521079f50a89"
+}

@@ -1,0 +1,6 @@
+# DataForge - Local development dependencies
+
+-r requirements.txt
+-r requirements-silver.txt
+
+pytest==9.2.0

@@ -1,22 +1,41 @@
+
 import boto3
 
 from pathlib import Path
-from botocore.exceptions import ClientError
+from botocore.exceptions import ClientError, BotoCoreError
+from boto3.exceptions import Boto3Error
+
 from src.utils.setup_logger import logger
 
-class S3Client:
-    def __init__(self, region_name: str):
-        self.client = boto3.client('s3', region_name=region_name)
 
-    def upload_file_to_s3(self, local_path: Path, bucket: str, s3_key: str) -> None:
+class S3Client:
+
+    def __init__(self, region_name: str):
+        self.client = boto3.client(
+            "s3",
+            region_name=region_name
+        )
+
+    def upload_file_to_s3(
+        self,
+        local_path: str | Path,
+        bucket: str,
+        s3_key: str
+    ) -> None:
 
         file_path = Path(local_path)
-        
+
         if not file_path.is_file():
-            raise FileNotFoundError(f"Local file not found: {file_path}")
-        
+            raise FileNotFoundError(
+                f"Local file not found: {file_path}"
+            )
+
         try:
-            logger.info(f"File uploading to s3: {str(file_path)}")
+
+            logger.info(
+                f"Uploading file {file_path.name} "
+                f"to s3://{bucket}/{s3_key}"
+            )
 
             self.client.upload_file(
                 str(file_path),
@@ -27,27 +46,61 @@ class S3Client:
                 }
             )
 
-            logger.info(f"File:{file_path.name} uploaded successfully to S3://{bucket}/{s3_key}")
+            logger.info(
+                f"File uploaded successfully: "
+                f"s3://{bucket}/{s3_key}"
+            )
 
-        except ClientError as error:
-            logger.error(f"Failed to upload file: {file_path.name} due to {error}")
+        except (ClientError, BotoCoreError, Boto3Error):
+            logger.exception(
+                f"Failed to upload file {file_path.name} "
+                f"to s3://{bucket}/{s3_key}"
+            )
             raise
 
-    def download_file_from_s3(self, bucket: str, s3_key: str, local_path: str) -> None:
+    def download_file_from_s3(
+        self,
+        bucket: str,
+        s3_key: str,
+        local_path: str | Path
+    ) -> None:
+
         file_path = Path(local_path)
-        file_path.parent.mkdir(parents=True, exist_ok=True)
+        file_path.parent.mkdir(
+            parents=True,
+            exist_ok=True
+        )
 
         try:
-            self.client.download_file(bucket, s3_key, str(file_path))
 
-            logger.info(f"Downloaded s3://{bucket}/{s3_key}")
+            self.client.download_file(
+                bucket,
+                s3_key,
+                str(file_path)
+            )
 
-        except ClientError as error:
-            logger.exception(f"S3 download failed: {s3_key} due to {error}")
+            logger.info(
+                f"Downloaded successfully: "
+                f"s3://{bucket}/{s3_key}"
+            )
+
+        except (ClientError, BotoCoreError, Boto3Error):
+            logger.exception(
+                f"S3 download failed: "
+                f"s3://{bucket}/{s3_key}"
+            )
             raise
 
-    def copy_s3_object(self, source_bucket: str, source_key: str, destination_bucket: str, destination_key: str) -> None:
+    def copy_s3_object(
+        self,
+        source_bucket: str,
+        source_key: str,
+        destination_bucket: str,
+        destination_key: str
+    ) -> None:
+
         try:
+
             self.client.copy_object(
                 CopySource={
                     "Bucket": source_bucket,
@@ -58,12 +111,14 @@ class S3Client:
             )
 
             logger.info(
-                f"Copied s3://{source_bucket}/{source_key}"
-                f" to s3://{destination_bucket}/{destination_key}"
+                f"Copied successfully: "
+                f"s3://{source_bucket}/{source_key} "
+                f"to s3://{destination_bucket}/{destination_key}"
             )
 
-        except ClientError:
+        except (ClientError, BotoCoreError, Boto3Error):
             logger.exception(
-                f"S3 copy failed: {source_key}"
+                f"S3 copy failed: "
+                f"s3://{source_bucket}/{source_key}"
             )
-            raise  
+            raise

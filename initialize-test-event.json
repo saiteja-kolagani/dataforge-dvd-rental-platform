@@ -1,0 +1,12 @@
+﻿{
+  "source": "aws.s3",
+  "detail-type": "Object Created",
+  "detail": {
+    "bucket": {
+      "name": "dataforge-dvdrental-landing-059502757297-ap-south-1"
+    },
+    "object": {
+      "key": "landing/ready/20261121_180109_775536_dvdrental.json"
+    }
+  }
+}

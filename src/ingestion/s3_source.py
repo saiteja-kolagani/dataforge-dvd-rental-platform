@@ -1,4 +1,8 @@
 
+import os
+
+from botocore.exceptions import ClientError
+
 from src.ingestion.source_file import SourceFile
 from src.utils.setup_logger import logger
 from src.utils.s3_client import S3Client
@@ -29,41 +33,59 @@ class S3Source:
 
         files = []
 
-        for page in paginator.paginate(
-            Bucket=self.bucket,
-            Prefix=self.prefix,
-        ):
+        try:
 
-            for obj in page.get("Contents", []):
+            for page in paginator.paginate(
+                Bucket=self.bucket,
+                Prefix=self.prefix,
+            ):
 
-                key = obj["Key"]
+                for obj in page.get("Contents", []):
 
-                if not key.lower().endswith(".csv"):
-                    continue
+                    key = obj["Key"]
 
-                file_name = key.rsplit("/", 1)[-1]
+                    # Ignore non-CSV objects
+                    if not key.lower().endswith(".csv"):
+                        continue
 
-                if not file_name:
-                    continue
+                    file_name = key.rsplit("/", 1)[-1]
 
-                files.append(
-                    SourceFile(
-                        file_name=file_name,
-                        table_name=file_name.rsplit(".", 1)[0],
-                        file_size_bytes=obj["Size"],
-                        source_bucket=self.bucket,
-                        source_key=key,
+                    # Ignore folder placeholders and empty files
+                    if not file_name or obj["Size"] == 0:
+                        continue
+
+                    table_name = os.path.splitext(file_name)[0]
+
+                    files.append(
+                        SourceFile(
+                            file_name=file_name,
+                            table_name=table_name,
+                            file_size_bytes=obj["Size"],
+                            source_bucket=self.bucket,
+                            source_key=key,
+                        )
                     )
-                )
+
+        except ClientError:
+            logger.exception(
+                f"Failed to discover files from "
+                f"s3://{self.bucket}/{self.prefix}"
+            )
+            raise
 
         if not files:
             raise FileNotFoundError(
-                f"No CSV files found in "
+                f"No valid CSV files found in "
                 f"s3://{self.bucket}/{self.prefix}"
             )
+
+        files = sorted(
+            files,
+            key=lambda item: item.file_name
+        )
 
         logger.info(
             f"Discovered {len(files)} CSV files in S3 Landing"
         )
 
-        return sorted(files, key=lambda item: item.file_name)
+        return files

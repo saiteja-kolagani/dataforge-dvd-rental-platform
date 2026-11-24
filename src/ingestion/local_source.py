@@ -1,6 +1,4 @@
 
-from pathlib import Path
-
 from src.ingestion.source_file import SourceFile
 from src.ingestion.file_discovery import discover_csv_files
 
@@ -8,6 +6,12 @@ from src.ingestion.file_discovery import discover_csv_files
 class LocalSource:
 
     def __init__(self, data_path: str):
+
+        if not data_path:
+            raise ValueError(
+                "Local data path cannot be empty."
+            )
+
         self.data_path = data_path
 
     def discover_files(self) -> list[SourceFile]:
