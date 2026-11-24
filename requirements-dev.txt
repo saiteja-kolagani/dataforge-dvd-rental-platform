@@ -4,3 +4,5 @@
 -r requirements-silver.txt
 
 pytest==9.2.0
+awscli==1.46.3
+

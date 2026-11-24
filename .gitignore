@@ -4,6 +4,7 @@
 # ==========================================
 
 # Raw datasets
+data/
 data/raw/*.csv
 
 # Logs
@@ -79,3 +80,10 @@ __pycache__/
 dynamodb-key.json
 initialize-response.json
 trigger-response.json
+
+# Generated deployment artifacts
+build/
+
+# AWS CLI V2 installer files
+awscli2.zip
+aws-cli-v2/
